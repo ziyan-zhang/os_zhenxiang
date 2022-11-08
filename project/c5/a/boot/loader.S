@@ -1,7 +1,7 @@
    %include "boot.inc"
    section loader vstart=LOADER_BASE_ADDR
    LOADER_STACK_TOP equ LOADER_BASE_ADDR
-   jmp loader_start					; 此处的物理地址是:
+;   jmp loader_start					; 此处的物理地址是:
    
 ;构建gdt及其内部的描述符
    GDT_BASE:   dd    0x00000000 
@@ -23,6 +23,7 @@
    SELECTOR_DATA equ (0x0002<<3) + TI_GDT + RPL0	 ; 同上
    SELECTOR_VIDEO equ (0x0003<<3) + TI_GDT + RPL0	 ; 同上 
 
+   total_mem_bytes dd 0
    ;以下是定义gdt的指针，前2字节是gdt界限，后4字节是gdt起始地址
 
    gdt_ptr  dw  GDT_LIMIT 
@@ -83,7 +84,7 @@
 	jmp .mem_get_ok
 
 ; ----- int 15h ah = 0x88 获取内存大小，只能获取64MB之内
-.e801_failed_so_try_88:
+.e801_failed_so_try88:
 	mov ah, 0x88
 	int 0x15
 	jc .error_hlt
@@ -97,3 +98,34 @@
 
 .mem_get_ok:
 	mov [total_mem_bytes], edx
+
+; ----- 准备进入保护模式 -----
+; ---1 打开A20 ---
+	in al, 0x92
+	or al, 0000_0010B
+	out 0x92, al
+; ---2 加载GDT---
+	lgdt [gdt_ptr]
+; ---3 将cr0的pe位置1
+	mov eax, cr0
+	or eax, 0x00000001
+	mov cr0, eax
+	
+	jmp dword SELECTOR_CODE:p_mode_start
+
+.error_hlt:
+	hlt
+
+[bits 32]
+p_mode_start:
+	mov ax, SELECTOR_DATA
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+	mov esp, LOADER_STACK_TOP
+	mov ax, SELECTOR_VIDEO
+	mov gs, ax
+
+	mov byte [gs:160], 'P'
+
+	jmp $
