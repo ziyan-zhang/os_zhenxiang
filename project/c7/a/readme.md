@@ -35,3 +35,4 @@ ld -melf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/init.o build/m
 while下面的这个main.o在第一个, works
 ld -melf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/main.o build/init.o build/interrupt.o build/kernel.o build/print.o
 
+markdown插入图片好像很麻烦,但确实是这样的.
