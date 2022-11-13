@@ -24,4 +24,14 @@ nasm -I ./boot/include/ -o build/loader.bin boot/loader.S
 sudo dd if=./build/loader.bin of=/opt/bochs/hd60M.img bs=512 count=4 seek=2 conv=notrunc
 
 # 第三块,写kernel.bin
-好复杂的依赖关系,等学会了用一下第八章要学的makefile知识
+注意, a.c include 了 b.h 的话, 链接时a的目标文件要放在b的目标文件前面, 也即要写成 ld a.o b.o, 而 ld b.o a.o 出来的文件有问题, 虽然ld本身并不出错. 原理应该是符号地址暂时找不到的画会暂时记下这个空, 向后找. 而后面的 .o 看不见前面的 .o 中的符号地址.
+编译链接写在了脚本 zuotian.sh 中.
+
+摘出来上面那段话相关的:
+
+下面的这个main.o在第二个, fail
+ld -melf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/init.o build/main.o build/interrupt.o build/kernel.o build/print.o
+
+while下面的这个main.o在第一个, works
+ld -melf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/main.o build/init.o build/interrupt.o build/kernel.o build/print.o
+
