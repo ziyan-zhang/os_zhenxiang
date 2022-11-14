@@ -1,4 +1,5 @@
 #!/bin/bash
+# 有了debug之后这个就过时了
 
 # 0. 目录和路径
 if [ ! -d "./build" ]; then
@@ -25,8 +26,8 @@ nasm -I ./boot/include/ -o ./build/loader.bin ./boot/loader.S && dd if=./build/l
 echo -e "\033[32m编译, 各种 .o 文件 \033[0m"
 
 # 编译c程序
-gcc -m32 -I lib/kernel/ -I lib/ -I kernel/ -c -fno-builtin -o build/timer.o device/timer.c
 gcc -m32 -I lib/kernel/ -I lib/ -I kernel/ -c -fno-builtin -o build/main.o kernel/main.c
+gcc -m32 -I lib/kernel/ -I lib/ -I kernel/ -c -fno-builtin -o build/timer.o device/timer.c
 gcc -m32 -I lib/kernel/ -I lib/ -I kernel/ -c -fno-builtin -o build/interrupt.o kernel/interrupt.c
 gcc -m32 -I lib/kernel/ -I lib/ -I kernel/ -c -fno-builtin -o build/init.o kernel/init.c
 
@@ -41,6 +42,9 @@ echo -e "\033[32m链接, 注意顺序, 尤其 main.o 在最前 \033[0m"
 # 下面的这个main.o在第一个, 正常触发时钟中断
 ld -melf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/main.o build/init.o build/interrupt.o \
 build/kernel.o build/print.o build/timer.o
+
+# sudo /usr/libexec/gcc/x86_64-redhat-linux/4.8.5/collect2 -melf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/main.o build/init.o build/interrupt.o \
+# build/kernel.o build/print.o build/timer.o
 
 # while 下面的这个main.o在第二个, fail
 # ld -melf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/init.o build/main.o build/interrupt.o build/kernel.o build/print.o
