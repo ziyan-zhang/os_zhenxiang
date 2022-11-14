@@ -40,7 +40,7 @@ int memcmp(const void* a_, const void* b_, uint32_t size) {
 char* strcpy(char* dst_, const char* src_) {
     ASSERT(dst_ != NULL && src_ != NULL);
     char* r = dst_;
-    while ((*dst_++ = *src_++));  # 赋值兼判定
+    while ((*dst_++ = *src_++));  // 赋值兼判定
     return r;
 }
 
