@@ -12,7 +12,8 @@ CFLAGS = -m32 -Wall $(LIB) -c -fno-builtin -W -Wstrict-prototypes \
 LDFLAGS = -melf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
-      $(BUILD_DIR)/debug.o 
+      $(BUILD_DIR)/debug.o $(BUILD_DIR)/string.o $(BUILD_DIR)/bitmap.o \
+	  $(BUILD_DIR)/memory.o
 
 ##############     MBR和bootloader代码编译     ############### 
 $(BUILD_DIR)/mbr.bin: boot/mbr.S 
@@ -33,7 +34,8 @@ $(BUILD_DIR)/main.o: kernel/main.c \
 
 
 $(BUILD_DIR)/init.o: kernel/init.c kernel/init.h \
-		lib/kernel/print.h kernel/interrupt.h device/timer.h
+		lib/kernel/print.h kernel/interrupt.h \
+		device/timer.h kernel/memory.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/interrupt.o: kernel/interrupt.c kernel/interrupt.h \
@@ -48,6 +50,20 @@ $(BUILD_DIR)/debug.o: kernel/debug.c kernel/debug.h \
 		lib/kernel/print.h kernel/interrupt.h
 	$(CC) $(CFLAGS) $< -o $@
 
+$(BUILD_DIR)/string.o: lib/string.c lib/string.h \
+		kernel/global.h kernel/debug.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/bitmap.o: lib/kernel/bitmap.c lib/kernel/bitmap.h \
+		lib/stdint.h lib/string.h lib/kernel/print.h \
+		kernel/interrupt.h kernel/debug.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/memory.o: kernel/memory.c kernel/memory.h \
+		lib/kernel/bitmap.h lib/stdint.h kernel/global.h \
+		kernel/debug.h lib/kernel/print.h lib/string.h
+	$(CC) $(CFLAGS) $< -o $@
+
 ##############    汇编代码编译    ###############
 $(BUILD_DIR)/kernel.o: kernel/kernel.S
 		$(AS) $(ASFLAGS) $< -o $@
@@ -58,7 +74,7 @@ $(BUILD_DIR)/print.o: lib/kernel/print.S
 $(BUILD_DIR)/kernel.bin: $(OBJS)
 		$(LD) $(LDFLAGS) $^ -o $@
 
-.PHONY : mk_dir hd clean all
+.PHONY : mk_dir hd clean all bochs
 
 mk_dir:
 	if [ ! -d $(BUILD_DIR) ];then mkdir $(BUILD_DIR);fi  # 注意这个mkdir是bash的, 不能改成mk_dir
@@ -80,4 +96,7 @@ build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 cpcp:
 	cp hd3M.img /opt/bochs/hd60M.img 
 
-all: mk_dir mk_img build hd cpcp
+bochs:
+	sudo /opt/bochs/bin/bochs -f /opt/bochs/bochsrc.disk
+
+all: mk_dir mk_img build hd cpcp bochs

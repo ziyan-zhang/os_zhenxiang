@@ -6,7 +6,7 @@
 #include "debug.h"
 
 /* 将位图btmp初始化 */
-void btmp_init(struct bitmap* btmp) {
+void bitmap_init(struct bitmap* btmp) {
     memset(btmp->bits, 0, btmp->btmp_bytes_len);
 }
 
