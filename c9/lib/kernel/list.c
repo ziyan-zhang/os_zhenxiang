@@ -28,7 +28,7 @@ void list_push(struct list* plist, struct list_elem* elem) {
 }
 
 /* 追加元素到链表队尾, 类似队列的先进先出操作 */
-void* list_append(struct list* plist, struct list_elem* elem) {
+void list_append(struct list* plist, struct list_elem* elem) {
     list_insert_before(&plist->tail, elem);
 }
 
@@ -83,7 +83,7 @@ uint32_t list_len(struct list* plist) {
     struct list_elem* elem = plist->head.next;
     uint32_t length = 0;
     while (elem != &plist->tail) {
-        length ++;
+        length++;
         elem = elem->next;
     }
     return length;
@@ -91,5 +91,5 @@ uint32_t list_len(struct list* plist) {
 
 /* 判断链表是否为空, 空时返回true, 否则返回false */
 bool list_empty(struct list* plist) {
-    return (plist->head.next == &plist->tail? true : false);
+    return (plist->head.next == &plist->tail ? true : false);
 }

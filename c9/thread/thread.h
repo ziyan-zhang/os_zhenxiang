@@ -3,7 +3,6 @@
 #include "stdint.h"
 #include "list.h"
 
-
 /* 自定义通用函数类型, 它将在很多线程函数中作为形参模型 */
 typedef void thread_func(void*);
 
@@ -86,9 +85,10 @@ struct task_struct {
     uint32_t stack_magic;       // 栈的边界标记, 用于检测栈的溢出, 应该是不容易出现的组合
 };
 
-struct task_struct* running_thread(void);
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg);
 void init_thread(struct task_struct* pthread, char* name, int prio);
-struct task_struct* thread_start(char* name, int prio, \
-                                thread_func function, void* func_arg);
+struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
+struct task_struct* running_thread(void);
+void schedule(void);
+void thread_init(void);
 #endif

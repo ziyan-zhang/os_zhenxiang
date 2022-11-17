@@ -3,9 +3,10 @@
 #include "string.h"
 #include "global.h"
 #include "memory.h"
-#include "switch.h"
 #include "list.h"
 #include "interrupt.h"
+#include "debug.h"
+#include "print.h"
 
 #define PG_SIZE 4096
 
@@ -92,13 +93,9 @@ static void make_main_thread(void) {
     init_thread(main_thread, "main", 31);
 
     /* main函数是当前线程, 当前线程不在thread_ready_list中, 所以只将其加在thread_all_list中 */
-    ASSERT(!(elem_find(&thread_all_list, &main_thread->all_list_tag)));
+    ASSERT(!elem_find(&thread_all_list, &main_thread->all_list_tag));
     list_append(&thread_all_list, &main_thread->all_list_tag);
 }
-
-
-
-
 
 /* 实现任务调度 */
 void schedule() {
@@ -124,3 +121,14 @@ void schedule() {
     next->status = TASK_RUNNING;
     switch_to(cur, next);
 }
+
+/* 初始化线程环境 */
+void thread_init(void) {
+    put_str("thread_init start\n");
+    list_init(&thread_ready_list);
+    list_init(&thread_all_list);
+    /* 将当前main函数创建为线程 */
+    make_main_thread();
+    put_str("thread_init done\n");
+}
+

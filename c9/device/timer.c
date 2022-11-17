@@ -3,6 +3,7 @@
 #include "print.h"
 #include "thread.h"
 #include "interrupt.h"
+#include "debug.h"
 
 #define IRQ0_FREQUENCY	   100
 #define INPUT_FREQUENCY	   1193180
@@ -13,7 +14,7 @@
 #define READ_WRITE_LATCH   3
 #define PIT_CONTROL_PORT   0x43
 
-uint32_t ticks;            // ticks是内核自中断开启以来总共的嘀嗒数
+uint32_t ticks;          // ticks是内核自中断开启以来总共的嘀嗒数
 
 /* 把操作的计数器counter_no、读写锁属性rwl、计数器模式counter_mode写入模式控制寄存器并赋予初始值counter_value */
 static void frequency_set(uint8_t counter_port, \
@@ -28,8 +29,6 @@ static void frequency_set(uint8_t counter_port, \
 /* 再写入counter_value的高8位 */
    outb(counter_port, (uint8_t)counter_value >> 8);
 }
-
-
 
 /* 时钟的中断处理函数 */
 static void intr_timer_handler(void) {

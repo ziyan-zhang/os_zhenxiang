@@ -7,6 +7,12 @@ put_int_buffer dq 0         ; 定义8字节缓冲区用于数字到字符的转�
 
 [bits 32]
 section .text
+;--------------------------------------------
+;put_str 通过put_char来打印以0字符结尾的字符串
+;--------------------------------------------
+;输入：栈中参数为打印的字符串
+;输出：无
+
 global put_str
 put_str:
     push ebx
@@ -35,7 +41,7 @@ put_char:
     mov gs, ax
 
 
-    ;;;;;;;;获取光标当前位置;;;;;;;;;;;;
+;;;;;;;;;  获取当前光标位置 ;;;;;;;;;
     ;先获得高8位, 第一步设置地址寄存器
     mov dx, 0x03d4  ; 0x03d4是CRT Controller寄存器组的Address Register的端口地址
     mov al, 0x0e    ; 0x0e  是CTR Controller数据寄存器组中光标位置高8位寄存器的索引
@@ -44,14 +50,14 @@ put_char:
     in al, dx       ; 通过Data Register写数据到al寄存器
     mov ah, al      ; 把高八位存到ah寄存器
 
-    ; 再获取低8位,于此类似.
+    ;再获取低8位,于此类似.
     mov dx, 0x03d4  ; 第一步, 设置地址寄存器
     mov al, 0x0f
     out dx, al
     mov dx, 0x03d5  ; 第二步, 读取数据寄存器
     in al, dx
 
-    ; 将光标存入bx, 获取待打印的字符
+    ;将光标存入bx, 获取待打印的字符
     mov bx, ax
     mov ecx, [esp + 36]
     ; 处理特殊情况
@@ -124,7 +130,7 @@ put_char:
     loop .cls
     mov bx, 1920
 
-global .set_cursor
+
 .set_cursor:
 ; 将光标设置为bx值
 ;;;;;;;;1 先设置高8位
@@ -198,5 +204,27 @@ put_int:
     mov cl, [put_int_buffer+edi]
     cmp edi, 8
     jl .put_each_num
+    popad
+    ret
+
+global set_cursor
+set_cursor:
+    pushad
+    mov bx, [esp+36]
+    ;;;;; 1 先设置高8位
+    mov dx, 0x03d4
+    mov al, 0x0e
+    out dx, al
+    mov dx, 0x03d5
+    mov al, bh
+    out dx, al
+
+    ;;;; 2 再设置低8位
+    mov dx, 0x03d4
+    mov al, 0x0f
+    out dx, al
+    mov dx, 0x03d5
+    mov al, bl
+    out dx, al
     popad
     ret

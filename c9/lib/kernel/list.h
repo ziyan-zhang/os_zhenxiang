@@ -1,4 +1,4 @@
-#ifndef __LIB_KERNEL_LISH_H
+#ifndef __LIB_KERNEL_LIST_H
 #define __LIB_KERNEL_LIST_H
 #include "global.h"
 
@@ -31,5 +31,4 @@ bool list_empty(struct list* plist);
 uint32_t list_len(struct list* plist);
 struct list_elem* list_traversal(struct list* plist, function func, int arg);
 bool elem_find(struct list* plist, struct list_elem* obj_elem);
-
 #endif
