@@ -84,20 +84,19 @@ static void general_intr_handler(uint8_t vec_nr) {
       cursor_pos++;
    }
 
-   set_cursor(0);
-   put_str("!!!!!!!!!!!!!!!    exception message begin    !!!!!!!!!!!!!\n");
-   set_cursor(88);
+   set_cursor(0);	 // 重置光标为屏幕左上角
+   put_str("!!!!!!!      excetion message begin  !!!!!!!!\n");
+   set_cursor(88);	// 从第2行第8个字符开始打印
    put_str(intr_name[vec_nr]);
-   if (vec_nr == 14) {
-      int page_fault_vaddr = 0;
-      asm ("movl %%cr2, %0" : "=r" (page_fault_vaddr));  // cr2是存放造成page_fault的地址
-      put_str("\npage fault addr is ");put_int(page_fault_vaddr);
+   if (vec_nr == 14) {	  // 若为Pagefault,将缺失的地址打印出来并悬停
+      int page_fault_vaddr = 0; 
+      asm ("movl %%cr2, %0" : "=r" (page_fault_vaddr));	  // cr2是存放造成page_fault的地址
+      put_str("\npage fault addr is ");put_int(page_fault_vaddr); 
    }
-   put_str("\n!!!!!!!!!!!!!!!    exception message begin    !!!!!!!!!!!!!\n");
-   // 能进入中断处理程序就表示已经处在关中断的情况下, 不会出现进程调度的情况. 
-   // 故下面的死循环不会再被中断
+   put_str("\n!!!!!!!      excetion message end    !!!!!!!!\n");
+  // 能进入中断处理程序就表示已经处在关中断情况下,
+  // 不会出现调度进程的情况。故下面的死循环不会再被中断。
    while(1);
-   // 跟之前代码不同, 其他中断类型不打印了. 
 }
 
 /* 完成一般中断处理函数注册及异常名称注册 */
@@ -172,11 +171,11 @@ enum intr_status intr_get_status() {
    return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
 }
 
-/* 在中断处理程序数组vector_no个元素中, 注册安装中断处理程序function */
+/* 在中断处理程序数组第vector_no个元素中注册安装中断处理程序function */
 void register_handler(uint8_t vector_no, intr_handler function) {
-   /* idt_table数组中的函数是在进入中断后根据中断向量号调用的 */
-   /* kernel/kernel.S中有 call [idt_table + %1*4] */
-   idt_table[vector_no] = function;
+/* idt_table数组中的函数是在进入中断后根据中断向量号调用的,
+ * 见kernel/kernel.S的call [idt_table + %1*4] */
+   idt_table[vector_no] = function; 
 }
 
 /*完成有关中断的所有初始化工作*/

@@ -37,7 +37,7 @@ $(BUILD_DIR)/main.o: kernel/main.c \
 
 $(BUILD_DIR)/init.o: kernel/init.c kernel/init.h \
 		lib/kernel/print.h kernel/interrupt.h \
-		device/timer.h kernel/memory.h
+		device/timer.h kernel/memory.h thread/thread.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/interrupt.o: kernel/interrupt.c kernel/interrupt.h \
