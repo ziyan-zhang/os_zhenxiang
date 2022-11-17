@@ -124,6 +124,7 @@ put_char:
     loop .cls
     mov bx, 1920
 
+global .set_cursor
 .set_cursor:
 ; 将光标设置为bx值
 ;;;;;;;;1 先设置高8位

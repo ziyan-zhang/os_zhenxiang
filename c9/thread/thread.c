@@ -3,9 +3,30 @@
 #include "string.h"
 #include "global.h"
 #include "memory.h"
+#include "switch.h"
+#include "list.h"
+
 #define PG_SIZE 4096
-/* 由kernel_thread去执行function(func_arg) */
+
+struct task_struct* main_thread;        // 主线程PCB
+struct list thread_ready_list;          // 就绪队列
+struct list thread_all_list;            // 所有任务队列
+static struct list_elem* thread_tag;    // 用于保存队列中的线程结点
+
+extern void switch_to(struct task_struct* cur, struct task_struct* next);
+
+/* 获取当前进程PCB指针 */
+struct task_struct* running_thread() {
+    uint32_t esp;
+    asm ("mov %%esp, %0" : "=g"(esp));      // 把esp寄存器中的值给c变量esp
+    /* 取esp整数部分, 即pcb起始地址 */
+    return (struct task_struct*) (esp & 0xfffff000);
+}
+
+/* 由kernel_thread去执行function(func_arg), 函数是有地址的. 该函数也不例外, 其地址被赋给了内核线程栈的eip指针.c:38  */
 static void kernel_thread(thread_func* function, void* func_arg) {
+    // 执行function前要开中断, 避免后面的时钟中断被屏蔽, 而无法调度其他线程
+    intr_enable();
     function(func_arg);
 }
 /* 初始化线程栈thread_stack, 将待执行的函数和参数放到thread_stack中相应的位置 */
@@ -18,6 +39,7 @@ void thread_create(struct task_struct* pthread, thread_func function, void* func
     pthread->self_kstack -= sizeof(struct thread_stack);
     /* 此时, pthread_kstack指向栈顶, 同时也是thread_stack的低地址, 这里顺手把thread_stack初始化了 */
     struct thread_stack* kthread_stack = (struct thread_stack*)pthread->self_kstack;
+    // thread.h:62, kernel_thread函数首地址被赋予函数指针eip
     kthread_stack->eip = kernel_thread;
     kthread_stack->function = function;
     kthread_stack->func_arg = func_arg;
@@ -26,11 +48,21 @@ void thread_create(struct task_struct* pthread, thread_func function, void* func
 
 /* 初始化线程基本信息 */
 void init_thread(struct task_struct* pthread, char* name, int prio) {
-    memset(pthread, 0, sizeof(*pthread));
+    memset(pthread, 0, sizeof(*pthread));           // 使用时初始化, 释放使初始化可能是异步的, 而且容易忘记
     strcpy(pthread->name, name);
-    pthread->status = TASK_RUNNING;
-    pthread->priority = prio;
+
+    if (pthread == main_thread) {
+        pthread->status = TASK_RUNNING;
+    } else {
+        pthread->status = TASK_READY;
+    }
+
+    // self_kstack是线程自己在内核态下使用的栈顶地址. 内核栈服务线程切换
     pthread->self_kstack = (uint32_t*)((uint32_t)pthread + PG_SIZE);
+    pthread->priority = prio;
+    pthread->ticks = prio;
+    pthread->elapsed_ticks = 0;
+    pthread->pgdir = NULL;
     pthread->stack_magic = 0x19870916;
 }
 
@@ -44,11 +76,28 @@ struct task_struct* thread_start(char* name, \
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);
 
-    asm volatile ("movl %0, %%esp; \
-                    pop %%ebp;      \
-                    pop %%ebx;      \
-		    pop %%edi;	    \
-                    pop %%esi;      \
-                    ret" : : "g"(thread->self_kstack) : "memory");
+    /* 确保之前不在队列中, 并加入就绪线程队列和全部线程队列 */
+    ASSERT(!elem_find(&thread_ready_list, &thread->general_tag));
+    list_append(&thread_ready_list, &thread->general_tag);
+    ASSERT(!elem_find(&thread_all_list, &thread->all_list_tag));
+    list_append(&thread_all_list, &thread->all_list_tag);
+
+    // asm volatile ("movl %0, %%esp; \
+    //                 pop %%ebp;      \
+    //                 pop %%ebx;      \
+	// 	    pop %%edi;	    \
+    //                 pop %%esi;      \
+    //                 ret" : : "g"(thread->self_kstack) : "memory");
+    ?
     return thread;
+}
+
+/* 将kernel中的main函数完善为主线程 */
+static void make_main_thread(void) {
+    main_thread = running_thread();
+    init_thread(main_thread, "main", 31);
+
+    /* main函数是当前线程, 当前线程不在thread_ready_list中, 所以只将其加在thread_all_list中 */
+    ASSERT(!(elem_find(&thread_all_list, &main_thread->all_list_tag)));
+    list_append(&thread_all_list, &main_thread->all_list_tag);
 }
