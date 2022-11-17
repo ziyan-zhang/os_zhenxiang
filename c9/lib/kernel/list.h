@@ -3,8 +3,8 @@
 #include "global.h"
 
 #define offset(struct_type, member) (int) ( &((struct_type*)0)->member )
-#define elem2entry(struct_type, struct_name, elem_ptr) \
-            (struct_type*) ((int)elem_ptr - offset(struct_tyoe, struct_member_name))
+#define elem2entry(struct_type, struct_member_name, elem_ptr) \
+            (struct_type*) ((int)elem_ptr - offset(struct_type, struct_member_name))
 
 /*             定义链表节点成员结构             */
 struct list_elem {

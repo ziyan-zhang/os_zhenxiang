@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "switch.h"
 #include "list.h"
+#include "interrupt.h"
 
 #define PG_SIZE 4096
 
@@ -82,13 +83,6 @@ struct task_struct* thread_start(char* name, \
     ASSERT(!elem_find(&thread_all_list, &thread->all_list_tag));
     list_append(&thread_all_list, &thread->all_list_tag);
 
-    // asm volatile ("movl %0, %%esp; \
-    //                 pop %%ebp;      \
-    //                 pop %%ebx;      \
-	// 	    pop %%edi;	    \
-    //                 pop %%esi;      \
-    //                 ret" : : "g"(thread->self_kstack) : "memory");
-    ?
     return thread;
 }
 
@@ -100,4 +94,33 @@ static void make_main_thread(void) {
     /* main函数是当前线程, 当前线程不在thread_ready_list中, 所以只将其加在thread_all_list中 */
     ASSERT(!(elem_find(&thread_all_list, &main_thread->all_list_tag)));
     list_append(&thread_all_list, &main_thread->all_list_tag);
+}
+
+
+
+
+
+/* 实现任务调度 */
+void schedule() {
+    ASSERT(intr_get_status() == INTR_OFF);
+
+    struct task_struct* cur = running_thread();
+    if (cur->status == TASK_RUNNING) {
+        // 若线程只是时间片到了, 将其加入到就绪队列尾
+        ASSERT(!elem_find(&thread_ready_list, &cur->general_tag));
+        list_append(&thread_ready_list, &cur->general_tag);
+        cur->ticks = cur->priority;
+        cur->status = TASK_READY;
+    } else {
+        /*若此线程需要某事件发生后才能继续上CPU运行,
+        不需要将其加入队列, 因为当前线程不(应该放)在就绪队列中*/
+    }
+
+    ASSERT(!list_empty(&thread_ready_list));
+    thread_tag = NULL;
+    /* 将thread_ready_list队列中第一个就绪进程弹出, 准备将其调度上CPU */
+    thread_tag = list_pop(&thread_ready_list);
+    struct task_struct* next = elem2entry(struct task_struct, general_tag, thread_tag);
+    next->status = TASK_RUNNING;
+    switch_to(cur, next);
 }
