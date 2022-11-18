@@ -1,5 +1,7 @@
 #include "sync.h"
 #include "interrupt.h"
+#include "debug.h"
+#include "thread.h"
 
 
 /* 初始化信号量 */

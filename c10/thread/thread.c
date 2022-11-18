@@ -138,7 +138,7 @@ void thread_block(enum task_status stat) {
 }
 
 /* 将线程pthread解除阻塞. 当前线程充当被阻塞线程的救世主 */
-void thread_unlock(struct task_struct* pthread) {
+void thread_unblock(struct task_struct* pthread) {
    enum intr_status old_status = intr_disable();
    
    ASSERT( (pthread->status == TASK_BLOCKED) || (pthread->status == TASK_WAITING) || (pthread->status == TASK_HANGING));
