@@ -1,4 +1,6 @@
 #include "sync.h"
+#include "list.h"
+#include "global.h"
 #include "interrupt.h"
 #include "debug.h"
 #include "thread.h"
@@ -24,7 +26,7 @@ void sema_down(struct semaphore* psema) {
     while (psema->value == 0) {     // 信号量值为0, 表示锁已被别的进程持有
         ASSERT(!elem_find(&psema->waiters, &running_thread()->general_tag));    // 当前进程不应该在信号量的waiter队列中
         if (elem_find(&psema->waiters, &running_thread()->general_tag)) {   // 再次panic保险
-            PANIC("sema down: thread blocked has been in waiters_list\n");
+            PANIC("sema_down: thread blocked has been in waiters_list\n");
         }
         /* 若信号量的值为0, 当前进程做两件事: 把自己加入该锁的等待队列; 阻塞自己 */
         list_append(&psema->waiters, &running_thread()->general_tag);

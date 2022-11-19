@@ -125,7 +125,7 @@ void schedule() {
    switch_to(cur, next);
 }
 
-/* 当前线程将自己阻塞, 标志其状态为stat. 无奈下的高风亮节 */
+/* 当前线程将自己阻塞: 标志其状态为stat, 然后被换下处理器. 无奈下的高风亮节 */
 void thread_block(enum task_status stat) {
    /* 拥有TASK_BLOCKED, TASK_WAITING, TASK_HANGING这三种状态stat, 不会被调度 */
    ASSERT((stat == TASK_BLOCKED) || (stat == TASK_WAITING) || (stat == TASK_HANGING) );
