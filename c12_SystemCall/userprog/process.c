@@ -5,6 +5,8 @@
 #include "interrupt.h"
 #include "string.h"
 #include "debug.h"
+#include "tss.h"
+#include "console.h"
 
  // kernel.kernel.S:38, 弹出所有通用寄存器，弹出gs, fs, es, ds四个寄存器， 跳过error_code, 调用iretd
 extern void intr_exit(void);
