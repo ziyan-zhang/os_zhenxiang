@@ -202,7 +202,7 @@ void* get_a_page(enum pool_flags pf, uint32_t vaddr) {
 		ASSERT(bit_idx > 0);
 		bitmap_set(&kernel_vaddr.vaddr_bitmap, bit_idx, 1);
 	} else {
-		PANIC("get_a_page error: kernel alloc userspace or user alloc kernelspace\n")
+		PANIC("get_a_page error: kernel alloc userspace or user alloc kernelspace\n");
 	}
 
 	/* 2. 分配物理内存地址 */

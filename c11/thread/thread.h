@@ -4,6 +4,9 @@
 #include "list.h"
 #include "memory.h"
 
+struct list thread_ready_list;
+struct list thread_all_list;
+
 /* 自定义通用函数类型,它将在很多线程函数中做为形参类型 */
 typedef void thread_func(void*);
 
