@@ -3,6 +3,8 @@
 #include "stdint.h"
 #include "print.h"
 #include "thread.h"
+#include "console.h"
+#include "string.h"
 
 #define syscall_nr 32 
 typedef void* syscall;

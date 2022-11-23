@@ -52,14 +52,10 @@ static void pic_init(void) {
    outb (PIC_S_DATA, 0x28);    // ICW2: 起始中断向量号为0x28,也就是IR[8-15] 为 0x28 ~ 0x2F.
    outb (PIC_S_DATA, 0x02);    // ICW3: 设置从片连接到主片的IR2引脚
    outb (PIC_S_DATA, 0x01);    // ICW4: 8086模式, 正常EOI
-
-   // /* 打开主片上IR0,也就是目前只接受时钟产生的中断 */
-   // outb (PIC_M_DATA, 0xfe);
-   // outb (PIC_S_DATA, 0xff);
-
-   /* 测试键盘, 只打开键盘和时钟中断, 其他全部关闭 */
-   outb(PIC_M_DATA, 0xfc);
-   outb(PIC_S_DATA, 0xff);
+   
+/* 只打开时钟中断,其它全部关闭 */
+   outb (PIC_M_DATA, 0xfe);
+   outb (PIC_S_DATA, 0xff);
 
    put_str("   pic_init done\n");
 }
@@ -75,12 +71,13 @@ static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler 
 
 /*初始化中断描述符表*/
 static void idt_desc_init(void) {
-   int i, last_index = IDT_DESC_CNT - 1;
+   int i, lastindex = IDT_DESC_CNT - 1;
    for (i = 0; i < IDT_DESC_CNT; i++) {
       make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]); 
    }
-   /* 单独处理系统调用,系统调用对应的中断门dpl为3, 中断处理程序为单独的syscall_handler */
-   make_idt_desc(&idt[last_index], IDT_DESC_ATTR_DPL3, syscall_handler);
+/* 单独处理系统调用,系统调用对应的中断门dpl为3,
+ * 中断处理程序为单独的syscall_handler */
+   make_idt_desc(&idt[lastindex], IDT_DESC_ATTR_DPL3, syscall_handler);
    put_str("   idt_desc_init done\n");
 }
 

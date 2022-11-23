@@ -22,7 +22,8 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	$(BUILD_DIR)/string.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/list.o \
 	$(BUILD_DIR)/switch.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/console.o \
 	$(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
-	$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o
+	$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o \
+	$(BUILD_DIR)/stdio.o
 
 ##############     MBR和bootloader代码编译     ############### 
 $(BUILD_DIR)/mbr.bin: boot/mbr.S 
@@ -35,7 +36,8 @@ $(BUILD_DIR)/main.o: kernel/main.c \
 		lib/kernel/print.h kernel/init.h kernel/debug.h \
 		kernel/memory.h thread/thread.h kernel/interrupt.h \
 		device/console.h device/ioqueue.h device/keyboard.h \
-		userprog/process.h userprog/syscall-init.h lib/user/syscall.h
+		userprog/process.h userprog/syscall-init.h \
+		lib/user/syscall.h lib/stdio.h
 	$(CC) $(CFLAGS) $< -o $@
 
 
@@ -70,7 +72,7 @@ $(BUILD_DIR)/bitmap.o: lib/kernel/bitmap.c lib/kernel/bitmap.h \
 $(BUILD_DIR)/memory.o: kernel/memory.c kernel/memory.h \
 		lib/kernel/bitmap.h lib/stdint.h kernel/global.h \
 		kernel/debug.h lib/kernel/print.h lib/string.h \
-		thread/sync.h
+		thread/sync.h lib/kernel/list.h kernel/interrupt.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/thread.o: thread/thread.c thread/thread.h \
@@ -119,7 +121,12 @@ $(BUILD_DIR)/syscall.o: lib/user/syscall.c lib/user/syscall.h \
 
 $(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c userprog/syscall-init.h \
 		lib/user/syscall.h thread/thread.h lib/stdint.h \
-		lib/kernel/print.h
+		lib/kernel/print.h device/console.h lib/string.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/stdio.o: lib/stdio.c lib/stdio.h \
+		lib/stdint.h kernel/global.h \
+		lib/kernel/print.h lib/string.h lib/user/syscall.h
 	$(CC) $(CFLAGS) $< -o $@
 
 ##############    汇编代码编译    ###############
@@ -161,4 +168,4 @@ bochs:
 
 test1: $(BUILD_DIR)/thread.o
 
-all: mk_dir mk_img build hd cpcp bochs
+all: mk_dir clean mk_img build hd cpcp bochs
