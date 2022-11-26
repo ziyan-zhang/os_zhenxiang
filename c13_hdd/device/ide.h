@@ -32,7 +32,7 @@ struct disk {
 struct ide_channel {
     char name[8];               //本ATA通道的名称
     uint16_t port_base;         //本通道的起始端口号
-    uint8_t iqr_no;             //本通道所用的中断号
+    uint8_t irq_no;             //本通道所用的中断号
     struct lock lock;           //通道锁
     bool expecting_intr;        //表示等待硬盘的中断
     struct semaphore disk_done; //用于阻塞、唤醒驱动程序
