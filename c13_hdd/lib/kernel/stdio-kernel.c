@@ -1,9 +1,10 @@
-#ifndef __LIB_KERNEL_STDIOKERNEL_H
-#define __LIB_KERNEL_STDIOKERNEL_H
-
 #include "stdio-kernel.h"
 #include "console.h"
 #include "stdio.h"
+#include "global.h"
+
+#define va_start(ap, v) ap=(va_list)&v
+#define va_end(ap) ap = NULL
 
 /* 供内核使用的格式化输出函数 */
 void printk(const char* format, ...) {
@@ -14,5 +15,3 @@ void printk(const char* format, ...) {
     va_end(args);
     console_put_str(buf);
 }
-
-#endif

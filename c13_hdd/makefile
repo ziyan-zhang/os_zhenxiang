@@ -23,7 +23,7 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	$(BUILD_DIR)/switch.o $(BUILD_DIR)/sync.o $(BUILD_DIR)/console.o \
 	$(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
 	$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o \
-	$(BUILD_DIR)/stdio.o
+	$(BUILD_DIR)/stdio.o $(BUILD_DIR)/stdio-kernel.o $(BUILD_DIR)/ide.o
 
 ##############     MBR和bootloader代码编译     ############### 
 $(BUILD_DIR)/mbr.bin: boot/mbr.S 
@@ -128,6 +128,19 @@ $(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c userprog/syscall-init.h \
 $(BUILD_DIR)/stdio.o: lib/stdio.c lib/stdio.h \
 		lib/stdint.h kernel/global.h \
 		lib/kernel/print.h lib/string.h lib/user/syscall.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/stdio-kernel.o: lib/kernel/stdio-kernel.c lib/kernel/stdio-kernel.h \
+		device/console.h lib/stdio.h kernel/global.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/ide.o: device/ide.c device/ide.h \
+		lib/kernel/io.h kernel/memory.h lib/kernel/stdio-kernel.h \
+		lib/stdint.h lib/kernel/list.h lib/kernel/io.h \
+		thread/sync.h kernel/global.h lib/kernel/list.h \
+		lib/kernel/bitmap.h kernel/debug.h lib/stdio.h \
+		lib/string.h device/timer.h kernel/interrupt.h
+
 	$(CC) $(CFLAGS) $< -o $@
 
 ##############    汇编代码编译    ###############
