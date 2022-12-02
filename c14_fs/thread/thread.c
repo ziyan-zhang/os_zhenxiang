@@ -9,8 +9,8 @@
 #include "process.h"
 #include "sync.h"
 
-struct task_struct* idle_thread;    //idle线程
 struct task_struct* main_thread;    // 主线程PCB
+struct task_struct* idle_thread;    // idle线程
 struct list thread_ready_list;	    // 就绪队列
 struct list thread_all_list;	    // 所有任务队列
 struct lock pid_lock;		    // 分配pid锁
@@ -21,7 +21,8 @@ extern void switch_to(struct task_struct* cur, struct task_struct* next);
 /* 系统空闲时运行的线程 */
 static void idle(void* arg UNUSED) {
    while(1) {
-      thread_block(TASK_BLOCKED);
+      thread_block(TASK_BLOCKED);     
+      //执行hlt时必须要保证目前处在开中断的情况下
       asm volatile ("sti; hlt" : : : "memory");
    }
 }
@@ -83,25 +84,25 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
    pthread->ticks = prio;
    pthread->elapsed_ticks = 0;
    pthread->pgdir = NULL;
-   pthread->stack_magic = 0x19870916;	  // 自定义的魔数
 
-   /* 文件描述符，预留标准输入输出，其他全置为-1 */
+   /* 预留标准输入输出 */
    pthread->fd_table[0] = 0;
    pthread->fd_table[1] = 1;
    pthread->fd_table[2] = 2;
-
+   /* 其余的全置为-1 */
    uint8_t fd_idx = 3;
-   while(fd_idx < MAX_FILES_PER_PROC) {
+   while (fd_idx < MAX_FILES_OPEN_PER_PROC) {
       pthread->fd_table[fd_idx] = -1;
       fd_idx++;
    }
+
+   pthread->stack_magic = 0x19870916;	  // 自定义的魔数
 }
 
 /* 创建一优先级为prio的线程,线程名为name,线程所执行的函数是function(func_arg) */
 struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg) {
 /* pcb都位于内核空间,包括用户进程的pcb也是在内核空间 */
    struct task_struct* thread = get_kernel_pages(1);
-
    init_thread(thread, name, prio);
    thread_create(thread, function, func_arg);
 
@@ -133,7 +134,6 @@ static void make_main_thread(void) {
 
 /* 实现任务调度 */
 void schedule() {
-
    ASSERT(intr_get_status() == INTR_OFF);
 
    struct task_struct* cur = running_thread(); 
@@ -147,7 +147,7 @@ void schedule() {
       不需要将其加入队列,因为当前线程不在就绪队列中。*/
    }
 
-   /* 如果就绪队列中没有可运行的任务，就唤醒idle */
+   /* 如果就绪队列中没有可运行的任务,就唤醒idle */
    if (list_empty(&thread_ready_list)) {
       thread_unblock(idle_thread);
    }
@@ -192,13 +192,13 @@ void thread_unblock(struct task_struct* pthread) {
    intr_set_status(old_status);
 }
 
-/* 主动让出cpu，换其他线程运行 */
+/* 主动让出cpu,换其它线程运行 */
 void thread_yield(void) {
-   struct task_struct* cur = running_thread();
+   struct task_struct* cur = running_thread();   
    enum intr_status old_status = intr_disable();
    ASSERT(!elem_find(&thread_ready_list, &cur->general_tag));
    list_append(&thread_ready_list, &cur->general_tag);
-   cur->status = TASK_READY;  // 没有重置优先级（滴答数）
+   cur->status = TASK_READY;
    schedule();
    intr_set_status(old_status);
 }
@@ -209,8 +209,8 @@ void thread_init(void) {
 
    list_init(&thread_ready_list);
    list_init(&thread_all_list);
-
    lock_init(&pid_lock);
+
 /* 将当前main函数创建为线程 */
    make_main_thread();
 

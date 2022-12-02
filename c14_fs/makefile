@@ -25,7 +25,7 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	$(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
 	$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o \
 	$(BUILD_DIR)/stdio.o $(BUILD_DIR)/stdio-kernel.o $(BUILD_DIR)/ide.o \
-	$(BUILD_DIR)/fs.o
+	$(BUILD_DIR)/fs.o $(BUILD_DIR)/dir.o $(BUILD_DIR)/file.o $(BUILD_DIR)/inode.o
 
 ##############     MBR和bootloader代码编译     ############### 
 $(BUILD_DIR)/mbr.bin: boot/mbr.S 
@@ -151,7 +151,25 @@ $(BUILD_DIR)/fs.o: fs/fs.c fs/fs.h \
 		fs/dir.h lib/string.h kernel/memory.h kernel/debug.h
 	$(CC) $(CFLAGS) $< -o $@
 
-##############    汇编代码编译    ###############
+$(BUILD_DIR)/dir.o: fs/dir.c fs/dir.h \
+		lib/stdint.h device/ide.h fs/super_block.h \
+		fs/inode.h fs/fs.h fs/file.h device/ide.h kernel/debug.h \
+		lib/kernel/stdio-kernel.h lib/string.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/file.o: fs/file.c fs/file.h \
+		lib/stdint.h  lib/kernel/stdio-kernel.h lib/kernel/bitmap.h \
+		device/ide.h fs/super_block.h fs/fs.h fs/inode.h \
+		lib/kernel/stdio-kernel.h fs/dir.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/inode.o: fs/inode.c fs/inode.h \
+		lib/stdint.h  kernel/debug.h kernel/memory.h device/ide.h \
+		fs/super_block.h kernel/interrupt.h lib/string.h
+	$(CC) $(CFLAGS) $< -o $@
+
+
+#############    汇编代码编译    ###############
 $(BUILD_DIR)/kernel.o: kernel/kernel.S
 	$(AS) $(ASFLAGS) $< -o $@
 $(BUILD_DIR)/print.o: lib/kernel/print.S
@@ -163,7 +181,7 @@ $(BUILD_DIR)/switch.o: thread/switch.S
 $(BUILD_DIR)/kernel.bin: $(OBJS)
 		$(LD) $(LDFLAGS) $^ -o $@
 
-.PHONY : mk_dir hd clean all bochs test1
+.PHONY : mk_dir mk_img clean build hd1_write all cpcp bochs test1
 
 mk_dir:
 	if [ ! -d $(BUILD_DIR) ];then mkdir $(BUILD_DIR);fi  # 注意这个mkdir是bash的, 不能改成mk_dir
@@ -171,16 +189,16 @@ mk_dir:
 mk_img:
 	if [ ! -e $(DISK_IMG) ];then /opt/bochs/bin/bximage -hd -mode="flat" -size=60 -q $(DISK_IMG);fi
 
-hd:
+hd1_write:
 	dd if=$(BUILD_DIR)/mbr.bin of=hd3M.img bs=512 count=1  conv=notrunc
 	dd if=$(BUILD_DIR)/loader.bin of=hd3M.img bs=512 count=4 seek=2 conv=notrunc
-	dd if=$(BUILD_DIR)/kernel.bin \
-		of=hd3M.img bs=512 count=200 seek=9 conv=notrunc
+	dd if=$(BUILD_DIR)/kernel.bin of=hd3M.img bs=512 count=200 seek=9 conv=notrunc
 
 clean:
-	cd $(BUILD_DIR) && rm -f ./*
+	cd $(BUILD_DIR) && rm -f ./* && cd ../ && rm hd3M.img
 
 build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
+
 
 cpcp:
 	cp hd3M.img /opt/bochs/hd60M.img 
@@ -190,4 +208,4 @@ bochs:
 
 test1: $(BUILD_DIR)/thread.o
 
-all: mk_dir clean mk_img build hd cpcp bochs
+all: mk_dir clean mk_img build hd1_write cpcp  bochs
