@@ -9,6 +9,7 @@
 #include "stdio-kernel.h"
 #include "string.h"
 #include "super_block.h"
+#include "stdio.h"
 
 /* 用来存储inode位置 */
 struct inode_position {
@@ -193,6 +194,9 @@ void inode_release(struct partition* part, uint32_t inode_no) {
    }
 
    /* 1.C inode所有的块地址已经收集到all_blocks中，下面逐个回收 */
+   printf("---block bitmap 0 before block recycle: %d\n", cur_part->block_bitmap.bits[0]);
+
+
    block_idx = 0;
    while (block_idx < block_cnt) {
       if (all_blocks[block_idx] != 0) {
@@ -205,9 +209,18 @@ void inode_release(struct partition* part, uint32_t inode_no) {
       block_idx++;
    }
 
+   printf("---block bitmap 0 after block recycle: %d\n", cur_part->block_bitmap.bits[0]);
+
+
    /* 2. 回收该inode所占用的inode号（inode在inode位图中的bit） */
+
+   printf("---inode bitmap 0 before inode recycle: %d\n", cur_part->inode_bitmap.bits[0]);
+
    bitmap_set(&part->inode_bitmap, inode_no, 0);
    bitmap_sync(cur_part, inode_no, INODE_BITMAP);
+
+   printf("---inode bitmap 0 after inode recycle: %d\n", cur_part->inode_bitmap.bits[0]);
+
 
    /* 以下inode delete是调试用的 
    此函数会在inode_table中将此inode清零，
