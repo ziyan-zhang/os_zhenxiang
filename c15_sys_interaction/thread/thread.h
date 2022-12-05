@@ -100,6 +100,7 @@ struct task_struct {
    struct mem_block_desc u_block_desc[DESC_CNT];   // 用户进程内存块描述符
 
    uint32_t cwd_inode_nr;  // 进程所在工作目录的inode编号
+   int16_t parent_pid;  //表示父进程的pid
    uint32_t stack_magic;	 // 用这串数字做栈的边界标记,用于检测栈的溢出
 };
 
@@ -108,6 +109,7 @@ extern struct list thread_all_list;
 
 void thread_create(struct task_struct* pthread, thread_func function, void* func_arg);
 void init_thread(struct task_struct* pthread, char* name, int prio);
+pid_t fork_pid(void);
 struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg);
 struct task_struct* running_thread(void);
 void schedule(void);

@@ -97,7 +97,12 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
    }
 
    pthread->cwd_inode_nr = 0;    // 以根目录作为默认工作路径
+   pthread->parent_pid = -1;
    pthread->stack_magic = 0x19870916;	  // 自定义的魔数
+}
+
+pid_t fork_pid(void) {
+	return allocate_pid();
 }
 
 /* 创建一优先级为prio的线程,线程名为name,线程所执行的函数是function(func_arg) */

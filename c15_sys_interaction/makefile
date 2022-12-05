@@ -11,11 +11,6 @@ ASBINLIB = -I boot/include/
 CFLAGS = -m32 -Wall $(LIB) -c -fno-builtin -W -Wstrict-prototypes \
          -Wmissing-prototypes -fno-stack-protector
 LDFLAGS = -melf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
-# OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
-#       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
-#       $(BUILD_DIR)/debug.o $(BUILD_DIR)/string.o $(BUILD_DIR)/bitmap.o \
-# 	  $(BUILD_DIR)/memory.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/switch.o \
-# 	  $(BUILD_DIR)/list.o
 
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
@@ -25,7 +20,8 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	$(BUILD_DIR)/keyboard.o $(BUILD_DIR)/ioqueue.o $(BUILD_DIR)/tss.o \
 	$(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o \
 	$(BUILD_DIR)/stdio.o $(BUILD_DIR)/stdio-kernel.o $(BUILD_DIR)/ide.o \
-	$(BUILD_DIR)/fs.o $(BUILD_DIR)/dir.o $(BUILD_DIR)/file.o $(BUILD_DIR)/inode.o
+	$(BUILD_DIR)/fs.o $(BUILD_DIR)/dir.o $(BUILD_DIR)/file.o $(BUILD_DIR)/inode.o \
+	$(BUILD_DIR)/fork.o
 
 ##############     MBR和bootloader代码编译     ############### 
 $(BUILD_DIR)/mbr.bin: boot/mbr.S 
@@ -168,6 +164,9 @@ $(BUILD_DIR)/inode.o: fs/inode.c fs/inode.h \
 		fs/super_block.h kernel/interrupt.h lib/string.h
 	$(CC) $(CFLAGS) $< -o $@
 
+$(BUILD_DIR)/fork.o: userprog/fork.c userprog/fork.h \
+		kernel/global.h  thread/thread.h
+	$(CC) $(CFLAGS) $< -o $@
 
 #############    汇编代码编译    ###############
 $(BUILD_DIR)/kernel.o: kernel/kernel.S
