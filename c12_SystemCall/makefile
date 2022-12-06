@@ -8,7 +8,7 @@ LIB = -I lib/ -I lib/kernel/ -I lib/user/ -I kernel/ -I device/ -I thread/ -I us
 ASFLAGS = -f elf 
 ASBINLIB = -I boot/include/
 CFLAGS = -m32 -Wall $(LIB) -c -fno-builtin -W -Wstrict-prototypes \
-         -Wmissing-prototypes -fno-stack-protector
+         -Wmissing-prototypes -fno-stack-protector -g
 LDFLAGS = -melf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 # OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 #       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
@@ -162,10 +162,10 @@ clean:
 build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 
 cpcp:
-	cp hd3M.img /opt/bochs/hd60M.img 
+	cp hd3M.img /opt/bochs-gdb/hd3M.img 
 
 bochs:
-	sudo /opt/bochs/bin/bochs -f /opt/bochs/bochsrc.disk
+	sudo /opt/bochs-gdb/bin/bochs-gdb -f /opt/bochs-gdb/bochsrcgdb
 
 test1: $(BUILD_DIR)/thread.o
 

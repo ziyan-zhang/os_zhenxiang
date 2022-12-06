@@ -187,7 +187,7 @@ mk_dir:
 	if [ ! -d $(BUILD_DIR) ];then mkdir $(BUILD_DIR);fi  # 注意这个mkdir是bash的, 不能改成mk_dir
 
 mk_img:
-	if [ ! -e $(DISK_IMG) ];then /opt/bochs/bin/bximage -hd -mode="flat" -size=60 -q $(DISK_IMG);fi
+	if [ ! -e $(DISK_IMG) ];then /opt/bochs/bin/bximage -hd -mode="flat" -size=3 -q $(DISK_IMG);fi
 
 hd1_write:
 	dd if=$(BUILD_DIR)/mbr.bin of=hd3M.img bs=512 count=1  conv=notrunc
@@ -201,11 +201,11 @@ build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 
 
 cpcp:
-	cp hd3M.img /opt/bochs/hd60M.img 
+	cp hd3M.img /opt/bochs-gdb/hd3M.img
 
 bochs:
-	sudo /opt/bochs/bin/bochs -f /opt/bochs/bochsrc.disk
+	sudo /opt/bochs-gdb/bin/bochs-gdb -q -f /opt/bochs-gdb/bochsrcgdb
 
 test1: $(BUILD_DIR)/thread.o
 
-all: mk_dir clean mk_img build hd1_write cpcp  bochs
+all: mk_dir  mk_img build hd1_write cpcp  bochs
