@@ -5,7 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "targetArchitecture": "x86_64",
             "name": "bochs-gdb: build and debug OS kernel",
             "type": "cppdbg",
             "request": "launch",
@@ -32,7 +31,6 @@
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
-            "targetArchitecture": "x86_64",
             "name": "(gdb) 启动",
             "type": "cppdbg",
             "request": "launch",

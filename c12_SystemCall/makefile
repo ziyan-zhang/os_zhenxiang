@@ -1,14 +1,14 @@
 BUILD_DIR = ./build
 DISK_IMG = hd3M.img
 ENTRY_POINT = 0xc0001500
-AS = nasm
-CC = gcc
-LD = ld
+AS = nasm -g	# 编译汇编代码mbr.S loader.S kernel.S print.S switch.S
+CC = gcc -g		# 编译c代码
+LD = ld -g		# 链接
 LIB = -I lib/ -I lib/kernel/ -I lib/user/ -I kernel/ -I device/ -I thread/ -I userprog/
 ASFLAGS = -f elf 
 ASBINLIB = -I boot/include/
 CFLAGS = -m32 -Wall $(LIB) -c -fno-builtin -W -Wstrict-prototypes \
-         -Wmissing-prototypes -fno-stack-protector -g
+         -Wmissing-prototypes -fno-stack-protector
 LDFLAGS = -melf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
 # OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 #       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
@@ -147,8 +147,12 @@ $(BUILD_DIR)/kernel.bin: $(OBJS)
 mk_dir:
 	if [ ! -d $(BUILD_DIR) ];then mkdir $(BUILD_DIR);fi  # 注意这个mkdir是bash的, 不能改成mk_dir
 
-mk_img:
-	if [ ! -e $(DISK_IMG) ];then /opt/bochs/bin/bximage -hd -mode="flat" -size=60 -q $(DISK_IMG);fi
+mk_img_bochs:
+	if [ ! -e $(DISK_IMG) ];then /opt/bochs-gdb/bin/bximage-gdb -hd -mode="flat" -size=3 -q $(DISK_IMG);fi
+
+# mk_img_qemu:
+# 	if [ ! -e $(DISK_IMG) ];then qemu-img create $(DISK_IMG) 3M;fi
+# 两种创建方法都是在bochs上能跑，在qemu上不能跑
 
 hd:
 	dd if=$(BUILD_DIR)/mbr.bin of=hd3M.img bs=512 count=1  conv=notrunc
@@ -161,12 +165,11 @@ clean:
 
 build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 
-cpcp:
-	cp hd3M.img /opt/bochs-gdb/hd3M.img 
 
 bochs:
-	sudo /opt/bochs-gdb/bin/bochs-gdb -f /opt/bochs-gdb/bochsrcgdb
+	sudo /opt/bochs-gdb/bin/bochs-gdb -f bochsrcgdb
 
 test1: $(BUILD_DIR)/thread.o
 
-all: mk_dir clean mk_img build hd cpcp bochs
+all: mk_dir mk_img_bochs clean  build hd bochs
+# all: mk_dir clean  build hd
