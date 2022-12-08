@@ -1,9 +1,9 @@
 BUILD_DIR = ./build
 DISK_IMG = hd3M.img
 ENTRY_POINT = 0xc0001500
-AS = nasm
-CC = gcc
-LD = ld
+AS = nasm -g	# 编译汇编代码mbr.S loader.S kernel.S print.S switch.S
+CC = gcc -g		# 编译c代码
+LD = ld -g		# 链接
 LIB = -I lib/ -I lib/kernel/ -I lib/user/ -I kernel/ -I device/ -I thread/ \
 		-I userprog/ -I fs/
 ASFLAGS = -f elf 
@@ -11,11 +11,6 @@ ASBINLIB = -I boot/include/
 CFLAGS = -m32 -Wall $(LIB) -c -fno-builtin -W -Wstrict-prototypes \
          -Wmissing-prototypes -fno-stack-protector
 LDFLAGS = -melf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
-# OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
-#       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
-#       $(BUILD_DIR)/debug.o $(BUILD_DIR)/string.o $(BUILD_DIR)/bitmap.o \
-# 	  $(BUILD_DIR)/memory.o $(BUILD_DIR)/thread.o $(BUILD_DIR)/switch.o \
-# 	  $(BUILD_DIR)/list.o
 
 OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
       $(BUILD_DIR)/timer.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/print.o \
@@ -48,7 +43,7 @@ $(BUILD_DIR)/init.o: kernel/init.c kernel/init.h \
 		device/timer.h kernel/memory.h thread/thread.h \
 		device/console.h device/keyboard.h userprog/tss.h \
 		fs/fs.h
-	$(CC) $(CFLAGS) $< -o $@
+			$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/interrupt.o: kernel/interrupt.c kernel/interrupt.h \
 		lib/stdint.h kernel/global.h lib/kernel/io.h lib/kernel/print.h
@@ -169,7 +164,7 @@ $(BUILD_DIR)/inode.o: fs/inode.c fs/inode.h \
 	$(CC) $(CFLAGS) $< -o $@
 
 
-#############    汇编代码编译    ###############
+##############    汇编代码编译    ###############
 $(BUILD_DIR)/kernel.o: kernel/kernel.S
 	$(AS) $(ASFLAGS) $< -o $@
 $(BUILD_DIR)/print.o: lib/kernel/print.S
@@ -181,31 +176,30 @@ $(BUILD_DIR)/switch.o: thread/switch.S
 $(BUILD_DIR)/kernel.bin: $(OBJS)
 		$(LD) $(LDFLAGS) $^ -o $@
 
-.PHONY : mk_dir mk_img clean build hd1_write all cpcp bochs test1
+.PHONY : mk_dir mk_img clean all bochs test1
 
 mk_dir:
 	if [ ! -d $(BUILD_DIR) ];then mkdir $(BUILD_DIR);fi  # 注意这个mkdir是bash的, 不能改成mk_dir
 
 mk_img:
-	if [ ! -e $(DISK_IMG) ];then /opt/bochs/bin/bximage -hd -mode="flat" -size=3 -q $(DISK_IMG);fi
+	if [ ! -e $(DISK_IMG) ];then /opt/bochs-gdb/bin/bximage-gdb -hd -mode="flat" -size=3 -q $(DISK_IMG);fi
+
 
 hd1_write:
 	dd if=$(BUILD_DIR)/mbr.bin of=hd3M.img bs=512 count=1  conv=notrunc
 	dd if=$(BUILD_DIR)/loader.bin of=hd3M.img bs=512 count=4 seek=2 conv=notrunc
-	dd if=$(BUILD_DIR)/kernel.bin of=hd3M.img bs=512 count=200 seek=9 conv=notrunc
+	dd if=$(BUILD_DIR)/kernel.bin \
+		of=hd3M.img bs=512 count=200 seek=9 conv=notrunc
 
 clean:
-	cd $(BUILD_DIR) && rm -f ./* && cd ../ && rm hd3M.img
+	cd $(BUILD_DIR) && rm -f && cd ../ && rm hd3M.img
 
 build: $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/mbr.bin $(BUILD_DIR)/loader.bin
 
 
-cpcp:
-	cp hd3M.img /opt/bochs-gdb/hd3M.img
-
 bochs:
-	sudo /opt/bochs-gdb/bin/bochs-gdb -q -f /opt/bochs-gdb/bochsrcgdb
+	sudo /opt/bochs-gdb/bin/bochs-gdb -f bochsrcgdb
 
 test1: $(BUILD_DIR)/thread.o
 
-all: mk_dir  mk_img build hd1_write cpcp  bochs
+all: mk_dir clean mk_dir mk_img hd1_write build bochs

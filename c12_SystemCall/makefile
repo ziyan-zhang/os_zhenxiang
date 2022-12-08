@@ -142,7 +142,7 @@ $(BUILD_DIR)/switch.o: thread/switch.S
 $(BUILD_DIR)/kernel.bin: $(OBJS)
 		$(LD) $(LDFLAGS) $^ -o $@
 
-.PHONY : mk_dir hd clean all bochs test1
+.PHONY : mk_dir dds clean all bochs test1
 
 mk_dir:
 	if [ ! -d $(BUILD_DIR) ];then mkdir $(BUILD_DIR);fi  # 注意这个mkdir是bash的, 不能改成mk_dir
@@ -154,7 +154,7 @@ mk_img_bochs:
 # 	if [ ! -e $(DISK_IMG) ];then qemu-img create $(DISK_IMG) 3M;fi
 # 两种创建方法都是在bochs上能跑，在qemu上不能跑
 
-hd:
+dds:
 	dd if=$(BUILD_DIR)/mbr.bin of=hd3M.img bs=512 count=1  conv=notrunc
 	dd if=$(BUILD_DIR)/loader.bin of=hd3M.img bs=512 count=4 seek=2 conv=notrunc
 	dd if=$(BUILD_DIR)/kernel.bin \
@@ -171,5 +171,5 @@ bochs:
 
 test1: $(BUILD_DIR)/thread.o
 
-all: mk_dir mk_img_bochs clean  build hd bochs
-# all: mk_dir clean  build hd
+all: mk_dir mk_img_bochs clean  build dds boccd cdcdcdchs
+# all: mk_dir clean  build dds
